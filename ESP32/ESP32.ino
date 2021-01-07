@@ -7,6 +7,8 @@
 
 // Load Wi-Fi library
 #include <WiFi.h>
+// Load wire library
+#include <Wire.h>
 
 #if 0
 // Replace with your network credentials
@@ -43,6 +45,8 @@ unsigned long previousTime = 0;
 const long timeoutTime = 2000;
 
 void setup() {
+  Wire.begin(); // join i2c bus (address optional for master)
+  
   Serial.begin(115200);
   // Initialize the output variables as outputs
   pinMode(output26, OUTPUT);
@@ -109,35 +113,35 @@ void loop(){
               forwardState = "off";
               backwardState = "off";
               digitalWrite(output26, HIGH);
-              //send go command
+              sendCom(0x01); //send go command
             } else if (header.indexOf("GET /Stop") >= 0) {
               Serial.println("Stopped");
               moveState = "off";
               forwardState = "off";
               backwardState = "off";
               digitalWrite(output26, LOW);
-              //send stop command
+              sendCom(0x06); //send stop command
             } else if (header.indexOf("GET /Forward") >= 0) {
               Serial.println("Buggy moving forward");
               forwardState = "on";
               moveState = "off";
               backwardState = "off";
-              //send forwards command
+              sendCom(0x02); //send forwards command
             } else if (header.indexOf("GET /Backward") >= 0) {
               Serial.println("Buggy moving backward");
               backwardState = "on";
               forwardState = "off";
               moveState = "off";
-              //send backwards command
+              sendCom(0x03); //send backwards command
             } else if (header.indexOf("GET /Right") >= 0) {
               Serial.println("Buggy turning right 90 degrees");
-              //send turn command;
+              sendCom(0x04); //send turn right command;
             } else if (header.indexOf("GET /Left") >= 0) {
               Serial.println("Buggy turning left 90 degrees");
-              //send turn command
+              sendCom(0x05); //send turn left command
             } else if (header.indexOf("GET /SensorGet") >= 0) {
               Serial.println("Taking a sensor reading");
-              //send sensor read command;
+              sendCom(0x06); //send sensor read command;
             }
             
             if (header.indexOf("GET /DataGet") >= 0){

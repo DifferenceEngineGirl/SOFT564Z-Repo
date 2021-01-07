@@ -2,7 +2,8 @@
 
 void i2cSetup(void){
   Wire.begin(4);                // join i2c bus with address #4
-  Wire.onReceive(command); // register event
+  Wire.onReceive(command);      // register event
+  Wire.onRequest(dataReq);
   Serial.begin(9600);           // start serial for output
 }
 
@@ -34,4 +35,9 @@ void command(int comNo){
       //error
       break;
   }
+}
+
+void dataReq(){
+  Wire.write(x + " = ");
+  Wire.write(sensorData);
 }
