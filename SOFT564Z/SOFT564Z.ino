@@ -18,13 +18,15 @@
 
 #define minDist 10.0
 
+#define FOR 1
+#define BACK 0
+
 Servo dipper;
 
 int motors;
 volatile int stopFlag;
 volatile int moveFlag;
-volatile int forFlag;
-volatile int backFlag;
+volatile int dirFlag;
 volatile int leftFlag;
 volatile int rightFlag;
 volatile int sampleFlag;
@@ -33,10 +35,6 @@ int sensorData;
 int count;
 
 void halt(){
-  stopFlag = HIGH;
-  moveFlag = LOW;
-  forFlag = LOW;
-  backFlag = LOW;
   
   digitalWrite(motorAPin1, HIGH);
   digitalWrite(motorAPin2, HIGH);
@@ -48,10 +46,6 @@ void halt(){
 }
 
 void forward() {
-  stopFlag = LOW;
-  moveFlag = LOW;
-  forFlag = HIGH;
-  backFlag = LOW;
   
   digitalWrite(motorAPin1, HIGH);
   digitalWrite(motorAPin2, LOW);
@@ -63,10 +57,6 @@ void forward() {
 }
 
 void backward() {
-  stopFlag = LOW;
-  moveFlag = LOW;
-  forFlag = LOW;
-  backFlag = HIGH;
   
   digitalWrite(motorAPin1, LOW);
   digitalWrite(motorAPin2, HIGH);
@@ -134,6 +124,13 @@ float getDistance(){
 }
 
 void takeSample(){
+  
+  digitalWrite(motorAPin1, HIGH);
+  digitalWrite(motorAPin2, HIGH);
+
+  digitalWrite(motorBPin1, HIGH);
+  digitalWrite(motorBPin2, HIGH);
+  
   dipper.write(90);
   delay(1000);
   //read moisture sensor
@@ -145,10 +142,8 @@ void takeSample(){
 }
 
 void autoMove(){
-  stopFlag = LOW;
-  moveFlag = HIGH;
-  forFlag = LOW;
-  backFlag = LOW;
+
+  Serial.println("Move forward");
   
   unsigned long start = millis();
   if((getDistance() > minDist)||
@@ -160,15 +155,15 @@ void autoMove(){
   while(motors){
     if((millis() - start >= sideTime) || 
        (getDistance() <= minDist) ||
-       (stopFlag == LOW)){
-      halt();
+       (stopFlag == HIGH)){
+        halt();
     }
   }
   if(getDistance() <= minDist){
     //avoid
   } else {
-  takeSample();
-  rightTurn();
+    takeSample();
+    rightTurn();
   }
 }
 
@@ -197,19 +192,21 @@ void setup() {
 
 void loop() {
   
-  if(moveFlag == HIGH){
-    autoMove();
-  }else if(forFlag == HIGH){
-    forward();
-  }else if(backFlag == HIGH){
-    backward();
-  }else if(sampleFlag == HIGH){
-    takeSample();
-  }else if(rightFlag == HIGH){
+  if(rightFlag == HIGH){
     rightTurn();
   }else if(leftFlag == HIGH){
     leftTurn();
-  }else if(stopFlag == HIGH){
+  }else if(moveFlag == HIGH){
+    autoMove(); 
+  }else if(sampleFlag == HIGH){
+    takeSample();
+  }else if(stopFlag == LOW){
+    if(dirFlag == FOR){
+      forward();
+    }else if(dirFlag == BACK){
+      backward();
+    }
+  }else{
     halt();
   }
 
