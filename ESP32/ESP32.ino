@@ -148,9 +148,9 @@ void loop(){
             } else if (header.indexOf("GET /Left") >= 0) {
               Serial.println("Buggy turning left 90 degrees");
               sendCom(0x05); //send turn left command
-            } else if (header.indexOf("GET /SensorGet") >= 0) {
+            } else if (header.indexOf("GET /SensorRead") >= 0) {
               Serial.println("Taking a sensor reading");
-              sendCom(0x06); //send sensor read command;
+              sendCom(0x07); //send sensor read command;
             }
             
             if (header.indexOf("GET /DataGet") >= 0){

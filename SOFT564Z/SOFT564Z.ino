@@ -25,6 +25,9 @@ volatile int stopFlag;
 volatile int moveFlag;
 volatile int forFlag;
 volatile int backFlag;
+volatile int leftFlag;
+volatile int rightFlag;
+volatile int sampleFlag;
 
 int sensorData;
 int count;
@@ -85,7 +88,13 @@ void leftTurn(){
 
   delay(turn90);
 
-  halt();
+  digitalWrite(motorAPin1, HIGH);
+  digitalWrite(motorAPin2, HIGH);
+
+  digitalWrite(motorBPin1, HIGH);
+  digitalWrite(motorBPin2, HIGH);
+
+  leftFlag = LOW;
 }
 
 void rightTurn(){
@@ -99,7 +108,13 @@ void rightTurn(){
 
   delay(turn90);
 
-  halt();
+  digitalWrite(motorAPin1, HIGH);
+  digitalWrite(motorAPin2, HIGH);
+
+  digitalWrite(motorBPin1, HIGH);
+  digitalWrite(motorBPin2, HIGH);
+
+  rightFlag = LOW;
 }
 
 
@@ -126,6 +141,7 @@ void takeSample(){
   dipper.write(0);
   delay(1000);
   count++;
+  sampleFlag = LOW;
 }
 
 void autoMove(){
@@ -170,6 +186,7 @@ void setup() {
   pinMode(echoPin, INPUT); // Sets the echoPin as an INPUT
 
   dipper.attach(servoPin);
+  dipper.write(0);
 
   i2cSetup();
 
@@ -179,13 +196,19 @@ void setup() {
 }
 
 void loop() {
-
+  
   if(moveFlag == HIGH){
     autoMove();
   }else if(forFlag == HIGH){
     forward();
   }else if(backFlag == HIGH){
     backward();
+  }else if(sampleFlag == HIGH){
+    takeSample();
+  }else if(rightFlag == HIGH){
+    rightTurn();
+  }else if(leftFlag == HIGH){
+    leftTurn();
   }else if(stopFlag == HIGH){
     halt();
   }
@@ -193,19 +216,4 @@ void loop() {
 
     
   delay(500);
-
-
-
-
-
-
-
-  
-  /*for(int i=0; i<4; i++){
-  forward(2000);
-  rightTurn();
-  //take sample
-  }
-  halt();
-  delay(5000);*/
 }

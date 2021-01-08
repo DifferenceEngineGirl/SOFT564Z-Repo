@@ -5,9 +5,18 @@ void i2cSetup(void){
   Wire.onReceive(command);      // register event
   Wire.onRequest(dataReq);
   Serial.begin(9600);           // start serial for output
+  Serial.println("Initialised");
 }
 
-void command(int comNo){
+void command(int numByte){
+
+  unsigned char comNo;
+  
+  while(Wire.available()){
+    comNo = Wire.read();
+  }
+  
+  Serial.println(comNo, HEX);
 
   switch(comNo){
     case 0x01: 
@@ -33,11 +42,17 @@ void command(int comNo){
       break;
     case 0x04: 
       //Call right turn function
-      rightTurn();
+      rightFlag = HIGH;
+      forFlag = LOW;
+      backFlag = LOW;
+      moveFlag = LOW;
       break;
     case 0x05: 
       //Call left turn function
-      leftTurn();
+      leftFlag = HIGH;
+      forFlag = LOW;
+      backFlag = LOW;
+      moveFlag = LOW;
       break;
     case 0x06: 
       //Call stop function
@@ -47,7 +62,7 @@ void command(int comNo){
       moveFlag = LOW;
       break;
     case 0x07: 
-      takeSample();
+      sampleFlag = HIGH;
       break;
     default:
       //error
