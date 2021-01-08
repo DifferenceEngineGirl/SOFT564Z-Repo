@@ -11,6 +11,8 @@
 
 #define servoPin 9
 
+#define sensorPin A3
+
 #define turn90 375
 #define sideTime 2000
 
@@ -23,6 +25,9 @@ volatile int stopFlag;
 volatile int moveFlag;
 volatile int forFlag;
 volatile int backFlag;
+
+int sensorData;
+int count;
 
 void halt(){
   stopFlag = HIGH;
@@ -117,8 +122,10 @@ void takeSample(){
   dipper.write(90);
   delay(1000);
   //read moisture sensor
+  sensorData = analogRead(sensorPin);
   dipper.write(0);
   delay(1000);
+  count++;
 }
 
 void autoMove(){
@@ -165,6 +172,8 @@ void setup() {
   dipper.attach(servoPin);
 
   i2cSetup();
+
+  count = 0;
   
   halt();
 }
@@ -183,7 +192,7 @@ void loop() {
 
 
     
-  delay(5000);
+  delay(500);
 
 
 

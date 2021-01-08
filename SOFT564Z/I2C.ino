@@ -12,21 +12,39 @@ void command(int comNo){
   switch(comNo){
     case 0x01: 
       //Call do square function
+      moveFlag = HIGH;
+      forFlag = LOW;
+      backFlag = LOW;
+      stopFlag = LOW;
       break;
     case 0x02: 
       //Call forward function
+      forFlag = HIGH;
+      moveFlag = LOW;
+      backFlag = LOW;
+      stopFlag = LOW;
       break;
     case 0x03: 
       //Call backward function
+      backFlag = HIGH;
+      forFlag = LOW;
+      moveFlag = LOW;
+      stopFlag = LOW;
       break;
     case 0x04: 
       //Call right turn function
+      rightTurn();
       break;
     case 0x05: 
       //Call left turn function
+      leftTurn();
       break;
     case 0x06: 
       //Call stop function
+      stopFlag = HIGH;
+      forFlag = LOW;
+      backFlag = LOW;
+      moveFlag = LOW;
       break;
     case 0x07: 
       takeSample();
@@ -38,6 +56,5 @@ void command(int comNo){
 }
 
 void dataReq(){
-  Wire.write(x + " = ");
-  Wire.write(sensorData);
+  Wire.write(count + " = " + sensorData);
 }

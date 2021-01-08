@@ -9,6 +9,8 @@
 #include <WiFi.h>
 // Load wire library
 #include <Wire.h>
+// Load list library
+#include <list>
 
 #if 0
 // Replace with your network credentials
@@ -43,6 +45,10 @@ unsigned long currentTime = millis();
 unsigned long previousTime = 0; 
 // Define timeout time in milliseconds (example: 2000ms = 2s)
 const long timeoutTime = 2000;
+
+//Create list to hold data
+std::list<String> dataList;
+
 
 void setup() {
   Wire.begin(); // join i2c bus (address optional for master)
@@ -81,7 +87,10 @@ void setup() {
   Serial.println(IP);
   
   server.begin();
+
 #endif
+
+dataList.assign(7,"100");
 }
 
 void loop(){
@@ -150,7 +159,12 @@ void loop(){
               client.println("Content-Disposition: attachment; filename=\"data.txt\"");
               client.println("Connection: close");
               client.println();
-              client.println("Data Values Variable");
+              client.println("Data:\n");
+              while(!dataList.empty()){
+                String sendData = dataList.front();
+                client.println(sendData);
+                dataList.pop_front();
+              }
             } else {
             client.println("Content-type:text/html");
             client.println("Connection: close");
