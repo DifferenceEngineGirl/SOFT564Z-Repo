@@ -59,5 +59,11 @@ void command(int numByte){
 }
 
 void dataReq(){
-  Wire.write(count + " = " + sensorData);
+  String data;
+  data += count;
+  data += " = ";
+  data += sensorData;
+  data += '\n';
+  Serial.println(data);
+  Wire.write(data.c_str());
 }

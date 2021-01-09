@@ -89,8 +89,6 @@ void setup() {
   server.begin();
 
 #endif
-
-dataList.assign(7,"100");
 }
 
 void loop(){
@@ -151,6 +149,7 @@ void loop(){
             } else if (header.indexOf("GET /SensorRead") >= 0) {
               Serial.println("Taking a sensor reading");
               sendCom(0x07); //send sensor read command;
+              reqData();
             }
             
             if (header.indexOf("GET /DataGet") >= 0){
@@ -160,10 +159,10 @@ void loop(){
               client.println("Connection: close");
               client.println();
               client.println("Data:\n");
-              while(!dataList.empty()){
-                String sendData = dataList.front();
+              for (std::list<String>::iterator it=dataList.begin(); it!=dataList.end(); ++it){
+                String sendData = *it;
                 client.println(sendData);
-                dataList.pop_front();
+                //dataList.pop_front();
               }
             } else {
             client.println("Content-type:text/html");
@@ -216,10 +215,10 @@ void loop(){
             
             // Display current state, and ON/OFF buttons for Left Turn   
             client.println("<p>Left Turn</p>");
-            client.println("<p><a href=\"/Left\"><button class=\"button\">Turn Right 90</button></a></p>");
+            client.println("<p><a href=\"/Left\"><button class=\"button\">Turn Left 90</button></a></p>");
                            
             // Display current state, and ON/OFF buttons for Sensor Read  
-            client.println("<p>Sensor Read - State " + sensorState + "</p>");
+            client.println("<p>Sensor Read</p>");
             client.println("<p><a href=\"/SensorRead\"><button class=\"button\">ON</button></a></p>");
             
             // Display current state, and ON/OFF buttons for Get Data  

@@ -7,11 +7,18 @@ void sendCom(int com){
 }
 
 void reqData(){
+  Wire.requestFrom(4, 10);
+  
+  int x = 0;
+  
   while (Wire.available()) { // slave may send less than requested
-    for(int x = 0; x<10; x++){
-      sensorData[x] = Wire.read();    // receive a byte as character
-      //Serial.print(c);         // print the character
-    }
+      char c = Wire.read();
+      if(c != '\n'){
+        sensorData[x] = c;    // receive a byte as character
+        x++;
+      }else{
+        break;
+      }
   }
-  dataList.push_back(String(sensorData));
+  dataList.push_back(sensorData);
 }

@@ -34,8 +34,23 @@ volatile int sampleFlag;
 int sensorData;
 int count;
 
-void halt(){
-  
+float getDistance() {
+  // Clears the trigPin condition
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  // Sets the trigPin HIGH (ACTIVE) for 10 microseconds
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  // Reads the echoPin, returns the sound wave travel time in microseconds
+  long duration = pulseIn(echoPin, HIGH);
+  // Calculating the distance
+  float distance = duration * 0.034 / 2; // Speed of sound wave divided by 2 (go and back)
+  return distance;
+}
+
+void halt() {
+
   digitalWrite(motorAPin1, HIGH);
   digitalWrite(motorAPin2, HIGH);
 
@@ -46,28 +61,32 @@ void halt(){
 }
 
 void forward() {
-  
-  digitalWrite(motorAPin1, HIGH);
-  digitalWrite(motorAPin2, LOW);
 
-  digitalWrite(motorBPin1, HIGH);
-  digitalWrite(motorBPin2, LOW);
+  if (getDistance() <= minDist) {
+    rightTurn();
+  } else {
+    digitalWrite(motorAPin1, HIGH);
+    digitalWrite(motorAPin2, LOW);
 
-  motors = 1;
+    digitalWrite(motorBPin1, HIGH);
+    digitalWrite(motorBPin2, LOW);
+
+    motors = 1;
+  }
 }
 
 void backward() {
   
-  digitalWrite(motorAPin1, LOW);
-  digitalWrite(motorAPin2, HIGH);
+    digitalWrite(motorAPin1, LOW);
+    digitalWrite(motorAPin2, HIGH);
 
-  digitalWrite(motorBPin1, LOW);
-  digitalWrite(motorBPin2, HIGH);
+    digitalWrite(motorBPin1, LOW);
+    digitalWrite(motorBPin2, HIGH);
 
-  motors = 1;
+    motors = 1;
 }
 
-void leftTurn(){
+void leftTurn() {
   digitalWrite(motorAPin1, HIGH);
   digitalWrite(motorAPin2, LOW);
 
@@ -87,7 +106,7 @@ void leftTurn(){
   leftFlag = LOW;
 }
 
-void rightTurn(){
+void rightTurn() {
   digitalWrite(motorAPin1, LOW);
   digitalWrite(motorAPin2, HIGH);
 
@@ -108,29 +127,14 @@ void rightTurn(){
 }
 
 
-float getDistance(){
-  // Clears the trigPin condition
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
-  // Sets the trigPin HIGH (ACTIVE) for 10 microseconds
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
-  // Reads the echoPin, returns the sound wave travel time in microseconds
-  long duration = pulseIn(echoPin, HIGH);
-  // Calculating the distance
-  float distance = duration * 0.034 / 2; // Speed of sound wave divided by 2 (go and back)
-  return distance;
-}
+void takeSample() {
 
-void takeSample(){
-  
   digitalWrite(motorAPin1, HIGH);
   digitalWrite(motorAPin2, HIGH);
 
   digitalWrite(motorBPin1, HIGH);
   digitalWrite(motorBPin2, HIGH);
-  
+
   dipper.write(90);
   delay(1000);
   //read moisture sensor
@@ -141,26 +145,22 @@ void takeSample(){
   sampleFlag = LOW;
 }
 
-void autoMove(){
+void autoMove() {
 
-  Serial.println("Move forward");
-  
   unsigned long start = millis();
-  if((getDistance() > minDist)||
-     (stopFlag == LOW)){
+  if (stopFlag == LOW) {
     forward();
-  } else {
-    rightTurn();
   }
-  while(motors){
-    if((millis() - start >= sideTime) || 
-       (getDistance() <= minDist) ||
-       (stopFlag == HIGH)){
-        halt();
+  while (motors) {
+    if ((millis() - start >= sideTime) ||
+        (getDistance() <= minDist) ||
+        (stopFlag == HIGH)) {
+      halt();
     }
   }
-  if(getDistance() <= minDist){
+  if (getDistance() <= minDist) {
     //avoid
+    rightTurn();
   } else {
     takeSample();
     rightTurn();
@@ -186,31 +186,33 @@ void setup() {
   i2cSetup();
 
   count = 0;
-  
+
+  stopFlag = HIGH;
+
   halt();
 }
 
 void loop() {
-  
-  if(rightFlag == HIGH){
+
+  if (rightFlag == HIGH) {
     rightTurn();
-  }else if(leftFlag == HIGH){
+  } else if (leftFlag == HIGH) {
     leftTurn();
-  }else if(moveFlag == HIGH){
-    autoMove(); 
-  }else if(sampleFlag == HIGH){
+  } else if (moveFlag == HIGH) {
+    autoMove();
+  } else if (sampleFlag == HIGH) {
     takeSample();
-  }else if(stopFlag == LOW){
-    if(dirFlag == FOR){
+  } else if (stopFlag == LOW) {
+    if (dirFlag == FOR) {
       forward();
-    }else if(dirFlag == BACK){
+    } else if (dirFlag == BACK) {
       backward();
     }
-  }else{
+  } else {
     halt();
   }
 
 
-    
+
   delay(500);
 }
