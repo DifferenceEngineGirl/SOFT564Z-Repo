@@ -64,6 +64,5 @@ void dataReq(){
   data += " = ";
   data += sensorData;
   data += '\n';
-  Serial.println(data);
   Wire.write(data.c_str());
 }

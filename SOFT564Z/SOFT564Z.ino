@@ -61,6 +61,7 @@ void halt() {
 }
 
 void forward() {
+  Serial.println("Forward");
 
   if (getDistance() <= minDist) {
     rightTurn();
@@ -107,6 +108,8 @@ void leftTurn() {
 }
 
 void rightTurn() {
+  Serial.println("Right Turn");
+  
   digitalWrite(motorAPin1, LOW);
   digitalWrite(motorAPin2, HIGH);
 
@@ -128,6 +131,7 @@ void rightTurn() {
 
 
 void takeSample() {
+  Serial.println("Sample");
 
   digitalWrite(motorAPin1, HIGH);
   digitalWrite(motorAPin2, HIGH);
@@ -146,10 +150,14 @@ void takeSample() {
 }
 
 void autoMove() {
+  Serial.println("Move");
 
   unsigned long start = millis();
-  if (stopFlag == LOW) {
+  if ((getDistance() > minDist) ||
+      (stopFlag == LOW)) {
     forward();
+  } else {
+    rightTurn();
   }
   while (motors) {
     if ((millis() - start >= sideTime) ||
@@ -157,6 +165,7 @@ void autoMove() {
         (stopFlag == HIGH)) {
       halt();
     }
+    Serial.println("Go");
   }
   if (getDistance() <= minDist) {
     //avoid

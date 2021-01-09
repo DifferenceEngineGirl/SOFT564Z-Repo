@@ -1,6 +1,6 @@
 /*********
   Based upon code by Rui Santos
-  Complete project details at https://randomnerdtutorials.com  
+  Complete project details at https://randomnerdtutorials.com
 
   Altered by Alice Tuffen
 *********/
@@ -42,17 +42,24 @@ const int output27 = 27;
 // Current time
 unsigned long currentTime = millis();
 // Previous time
-unsigned long previousTime = 0; 
+unsigned long previousTime = 0;
 // Define timeout time in milliseconds (example: 2000ms = 2s)
 const long timeoutTime = 2000;
 
 //Create list to hold data
 std::list<String> dataList;
 
+hw_timer_t * readTimer = NULL;
+
+volatile int reqFlag;
+
+void setFlag() {
+  reqFlag = HIGH;
+}
 
 void setup() {
   Wire.begin(); // join i2c bus (address optional for master)
-  
+
   Serial.begin(115200);
   // Initialize the output variables as outputs
   pinMode(output26, OUTPUT);
@@ -61,7 +68,7 @@ void setup() {
   digitalWrite(output26, LOW);
   digitalWrite(output27, LOW);
 
- #if 0
+#if 0
   // Connect to Wi-Fi network with SSID and password
   Serial.print("Connecting to ");
   Serial.println(ssid);
@@ -85,13 +92,22 @@ void setup() {
   IPAddress IP = WiFi.softAPIP();
   Serial.print("AP IP address: ");
   Serial.println(IP);
-  
-  server.begin();
 
+  server.begin();
 #endif
+
+  //prescale 80 for 1MHz clock
+  readTimer = timerBegin(0, 80, true);
+  timerAttachInterrupt(readTimer, &setFlag, true);
+  
+  //Alarm every second
+  timerAlarmWrite(readTimer, 1000000, true);
+  timerAlarmEnable(readTimer);
+
+  reqFlag = LOW;
 }
 
-void loop(){
+void loop() {
   WiFiClient client = server.available();   // Listen for incoming clients
 
   if (client) {                             // If a new client connects,
@@ -112,7 +128,7 @@ void loop(){
             // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
             // and a content-type so the client knows what's coming, then a blank line:
             client.println("HTTP/1.1 200 OK");
-            
+
             // turns the GPIOs on and off
             if (header.indexOf("GET /Move") >= 0) {
               Serial.println("Buggy moving");
@@ -151,83 +167,84 @@ void loop(){
               sendCom(0x07); //send sensor read command;
               reqData();
             }
-            
-            if (header.indexOf("GET /DataGet") >= 0){
+
+            if (header.indexOf("GET /DataGet") >= 0) {
               Serial.println("Data Fetched");
+              dataList.unique();
               client.println("Content-type:text/plain");
               client.println("Content-Disposition: attachment; filename=\"data.txt\"");
               client.println("Connection: close");
               client.println();
               client.println("Data:\n");
-              for (std::list<String>::iterator it=dataList.begin(); it!=dataList.end(); ++it){
+              for (std::list<String>::iterator it = dataList.begin(); it != dataList.end(); ++it) {
                 String sendData = *it;
                 client.println(sendData);
                 //dataList.pop_front();
               }
             } else {
-            client.println("Content-type:text/html");
-            client.println("Connection: close");
-            client.println();
-            // Display the HTML web page
-            client.println("<!DOCTYPE html><html>");
-            client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
-            client.println("<link rel=\"icon\" href=\"data:,\">");
-            // CSS to style the on/off buttons 
-            // Feel free to change the background-color and font-size attributes to fit your preferences
-            client.println("<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}");
-            client.println(".button { background-color: #4CAF50; border: none; color: white; padding: 16px 40px;");
-            client.println("text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}");
-            client.println(".button2 {background-color: #555555;}</style></head>");
-            
-            // Web Page Heading
-            client.println("<body><h1>ESP32 Web Server</h1>");
-            
-            // Display current state, and ON/OFF buttons for Move  
-            client.println("<p>Move - State " + moveState + "</p>");
-            // If the moveState is off, it displays the ON button       
-            if (moveState=="off") {
-              client.println("<p><a href=\"/Move\"><button class=\"button\">Move</button></a></p>");
-            } else {
-              client.println("<p><a href=\"/Stop\"><button class=\"button button2\">Halt</button></a></p>");
-            } 
-            
-            // Display current state, and ON/OFF buttons for Forward   
-            client.println("<p>Forwards - State " + forwardState + "</p>");
-            // If the forwardState is off, it displays the ON button       
-            if (forwardState=="off") {
-              client.println("<p><a href=\"/Forward\"><button class=\"button\">Move Forwards</button></a></p>");
-            } else {
-              client.println("<p><a href=\"/Stop\"><button class=\"button button2\">Halt</button></a></p>");
-            }
-            
-            // Display current state, and ON/OFF buttons for Backward   
-            client.println("<p>Backwards - State " + backwardState + "</p>");
-            // If the backwardState is off, it displays the ON button       
-            if (backwardState=="off") {
-              client.println("<p><a href=\"/Backward\"><button class=\"button\">Move Backwards</button></a></p>");
-            } else {
-              client.println("<p><a href=\"/Stop\"><button class=\"button button2\">Halt</button></a></p>");
-            }
-            
-            // Display current state, and ON/OFF buttons for Right Turn   
-            client.println("<p>Right Turn</p>");
-            client.println("<p><a href=\"/Right\"><button class=\"button\">Turn Right 90</button></a></p>");
-            
-            // Display current state, and ON/OFF buttons for Left Turn   
-            client.println("<p>Left Turn</p>");
-            client.println("<p><a href=\"/Left\"><button class=\"button\">Turn Left 90</button></a></p>");
-                           
-            // Display current state, and ON/OFF buttons for Sensor Read  
-            client.println("<p>Sensor Read</p>");
-            client.println("<p><a href=\"/SensorRead\"><button class=\"button\">ON</button></a></p>");
-            
-            // Display current state, and ON/OFF buttons for Get Data  
-            client.println("<p>Get Data</p>");
-            client.println("<p><a href=\"/DataGet\"><button class=\"button\">ON</button></a></p>");
-            
-            // The HTTP response ends with another blank line 
-            client.println("</body></html>");
-            client.println();
+              client.println("Content-type:text/html");
+              client.println("Connection: close");
+              client.println();
+              // Display the HTML web page
+              client.println("<!DOCTYPE html><html>");
+              client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+              client.println("<link rel=\"icon\" href=\"data:,\">");
+              // CSS to style the on/off buttons
+              // Feel free to change the background-color and font-size attributes to fit your preferences
+              client.println("<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}");
+              client.println(".button { background-color: #4CAF50; border: none; color: white; padding: 16px 40px;");
+              client.println("text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}");
+              client.println(".button2 {background-color: #555555;}</style></head>");
+
+              // Web Page Heading
+              client.println("<body><h1>ESP32 Web Server</h1>");
+
+              // Display current state, and ON/OFF buttons for Move
+              client.println("<p>Move - State " + moveState + "</p>");
+              // If the moveState is off, it displays the ON button
+              if (moveState == "off") {
+                client.println("<p><a href=\"/Move\"><button class=\"button\">Move</button></a></p>");
+              } else {
+                client.println("<p><a href=\"/Stop\"><button class=\"button button2\">Halt</button></a></p>");
+              }
+
+              // Display current state, and ON/OFF buttons for Forward
+              client.println("<p>Forwards - State " + forwardState + "</p>");
+              // If the forwardState is off, it displays the ON button
+              if (forwardState == "off") {
+                client.println("<p><a href=\"/Forward\"><button class=\"button\">Move Forwards</button></a></p>");
+              } else {
+                client.println("<p><a href=\"/Stop\"><button class=\"button button2\">Halt</button></a></p>");
+              }
+
+              // Display current state, and ON/OFF buttons for Backward
+              client.println("<p>Backwards - State " + backwardState + "</p>");
+              // If the backwardState is off, it displays the ON button
+              if (backwardState == "off") {
+                client.println("<p><a href=\"/Backward\"><button class=\"button\">Move Backwards</button></a></p>");
+              } else {
+                client.println("<p><a href=\"/Stop\"><button class=\"button button2\">Halt</button></a></p>");
+              }
+
+              // Display current state, and ON/OFF buttons for Right Turn
+              client.println("<p>Right Turn</p>");
+              client.println("<p><a href=\"/Right\"><button class=\"button\">Turn Right 90</button></a></p>");
+
+              // Display current state, and ON/OFF buttons for Left Turn
+              client.println("<p>Left Turn</p>");
+              client.println("<p><a href=\"/Left\"><button class=\"button\">Turn Left 90</button></a></p>");
+
+              // Display current state, and ON/OFF buttons for Sensor Read
+              client.println("<p>Sensor Read</p>");
+              client.println("<p><a href=\"/SensorRead\"><button class=\"button\">Read</button></a></p>");
+
+              // Display current state, and ON/OFF buttons for Get Data
+              client.println("<p>Get Data</p>");
+              client.println("<p><a href=\"/DataGet\"><button class=\"button\">Fetch</button></a></p>");
+
+              // The HTTP response ends with another blank line
+              client.println("</body></html>");
+              client.println();
             }
             // Break out of the while loop
             break;
@@ -245,5 +262,9 @@ void loop(){
     client.stop();
     Serial.println("Client disconnected.");
     Serial.println("");
+  }
+  if (reqFlag == HIGH) {
+    reqFlag = LOW;
+    reqData();
   }
 }
