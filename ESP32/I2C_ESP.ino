@@ -21,4 +21,5 @@ void reqData(){
       }
   }
   dataList.push_back(sensorData);
+  dataList.unique();
 }

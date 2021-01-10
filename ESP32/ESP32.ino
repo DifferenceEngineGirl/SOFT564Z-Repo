@@ -99,7 +99,7 @@ void setup() {
   //prescale 80 for 1MHz clock
   readTimer = timerBegin(0, 80, true);
   timerAttachInterrupt(readTimer, &setFlag, true);
-  
+
   //Alarm every second
   timerAlarmWrite(readTimer, 1000000, true);
   timerAlarmEnable(readTimer);
@@ -181,6 +181,19 @@ void loop() {
                 client.println(sendData);
                 //dataList.pop_front();
               }
+            } else if (header.indexOf("GET /DataClear") >= 0) {
+              Serial.println("Data Fetched and Cleared");
+              dataList.unique();
+              client.println("Content-type:text/plain");
+              client.println("Content-Disposition: attachment; filename=\"data.txt\"");
+              client.println("Connection: close");
+              client.println();
+              client.println("Data:\n");
+              while (!dataList.empty()) {
+                String sendData = dataList.front();
+                client.println(sendData);
+                dataList.pop_front();
+              }
             } else {
               client.println("Content-type:text/html");
               client.println("Connection: close");
@@ -226,21 +239,25 @@ void loop() {
                 client.println("<p><a href=\"/Stop\"><button class=\"button button2\">Halt</button></a></p>");
               }
 
-              // Display current state, and ON/OFF buttons for Right Turn
+              // Display name of function and Turn button for Right Turn
               client.println("<p>Right Turn</p>");
               client.println("<p><a href=\"/Right\"><button class=\"button\">Turn Right 90</button></a></p>");
 
-              // Display current state, and ON/OFF buttons for Left Turn
+              // Display name of function and Turn button for Left Turn
               client.println("<p>Left Turn</p>");
               client.println("<p><a href=\"/Left\"><button class=\"button\">Turn Left 90</button></a></p>");
 
-              // Display current state, and ON/OFF buttons for Sensor Read
+              // Display name of function and Read button for Sensor Read
               client.println("<p>Sensor Read</p>");
               client.println("<p><a href=\"/SensorRead\"><button class=\"button\">Read</button></a></p>");
 
-              // Display current state, and ON/OFF buttons for Get Data
+              // Display name of function and Fetch button for Get Data
               client.println("<p>Get Data</p>");
               client.println("<p><a href=\"/DataGet\"><button class=\"button\">Fetch</button></a></p>");
+
+              // Display name of function and Fetch and Clear button for Get and Clear Data
+              client.println("<p>Get and Clear Data</p>");
+              client.println("<p><a href=\"/DataClear\"><button class=\"button\">Fetch and Clear</button></a></p>");
 
               // The HTTP response ends with another blank line
               client.println("</body></html>");
