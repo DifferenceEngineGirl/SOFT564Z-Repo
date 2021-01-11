@@ -1,5 +1,5 @@
 /*********
-  Based upon code by Rui Santos
+  Based upon webserver/access point code by Rui Santos
   Complete project details at https://randomnerdtutorials.com
 
   Altered by Alice Tuffen
@@ -31,7 +31,6 @@ String header;
 // Auxiliar variables to store the current output state
 String moveState = "off";
 String sensorState = "off";
-String dataState = "off";
 String forwardState = "off";
 String backwardState = "off";
 
@@ -49,10 +48,13 @@ const long timeoutTime = 2000;
 //Create list to hold data
 std::list<String> dataList;
 
+//Create timer
 hw_timer_t * readTimer = NULL;
 
+//Create flag for data requests to be sent
 volatile int reqFlag;
 
+//Funtion to be called when the timer interupt happens
 void setFlag() {
   reqFlag = HIGH;
 }
@@ -103,7 +105,8 @@ void setup() {
   //Alarm every second
   timerAlarmWrite(readTimer, 1000000, true);
   timerAlarmEnable(readTimer);
-
+  
+  //Initialise the data request flag to low
   reqFlag = LOW;
 }
 
@@ -280,6 +283,7 @@ void loop() {
     Serial.println("Client disconnected.");
     Serial.println("");
   }
+  //If the data request flag has been tripped, send a request to the arduino
   if (reqFlag == HIGH) {
     reqFlag = LOW;
     reqData();

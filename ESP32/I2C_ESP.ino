@@ -1,3 +1,5 @@
+//Based off inbuilt arduino I2C example code
+
 char sensorData[10];
 
 void sendCom(int com){
